@@ -1,10 +1,9 @@
 
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAppStore } from '../../store/appStore';
+import { useSupabaseStore } from '../../store/supabaseStore';
 import Navbar from '../../components/Navbar';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
-import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Switch } from '../../components/ui/switch';
 import { Shield, User, Crown } from 'lucide-react';
@@ -12,7 +11,7 @@ import { toast } from '@/hooks/use-toast';
 
 const AdminRoles = () => {
   const navigate = useNavigate();
-  const { currentAdmin, admins, updateAdmin } = useAppStore();
+  const { currentAdmin, admins, updateAdmin, fetchAdmins } = useSupabaseStore();
 
   useEffect(() => {
     if (!currentAdmin) {
@@ -24,18 +23,28 @@ const AdminRoles = () => {
       navigate('/admin/dashboard');
       return;
     }
-  }, [currentAdmin, navigate]);
+
+    fetchAdmins();
+  }, [currentAdmin, navigate, fetchAdmins]);
 
   if (!currentAdmin || currentAdmin.role !== 'super') {
     return null;
   }
 
-  const handleToggleActive = (adminId: string, isActive: boolean) => {
-    updateAdmin(adminId, { isActive });
-    toast({
-      title: "Status Updated",
-      description: `Admin ${isActive ? 'activated' : 'deactivated'} successfully`,
-    });
+  const handleToggleActive = async (adminId: string, isActive: boolean) => {
+    try {
+      await updateAdmin(adminId, { isActive });
+      toast({
+        title: "Status Updated",
+        description: `Admin ${isActive ? 'activated' : 'deactivated'} successfully`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update admin status",
+        variant: "destructive"
+      });
+    }
   };
 
   const getRoleIcon = (role: string) => {

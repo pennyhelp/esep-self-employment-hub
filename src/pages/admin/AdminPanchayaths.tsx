@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAppStore } from '../../store/appStore';
+import { useSupabaseStore } from '../../store/supabaseStore';
 import Navbar from '../../components/Navbar';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
@@ -13,7 +13,14 @@ import { toast } from '@/hooks/use-toast';
 
 const AdminPanchayaths = () => {
   const navigate = useNavigate();
-  const { currentAdmin, panchayaths, addPanchayath, updatePanchayath, deletePanchayath } = useAppStore();
+  const { 
+    currentAdmin, 
+    panchayaths, 
+    addPanchayath, 
+    updatePanchayath, 
+    deletePanchayath,
+    fetchPanchayaths 
+  } = useSupabaseStore();
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({ name: '', district: '' });
@@ -21,14 +28,16 @@ const AdminPanchayaths = () => {
   useEffect(() => {
     if (!currentAdmin) {
       navigate('/admin/login');
+      return;
     }
-  }, [currentAdmin, navigate]);
+    fetchPanchayaths();
+  }, [currentAdmin, navigate, fetchPanchayaths]);
 
   if (!currentAdmin) {
     return null;
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!formData.name.trim() || !formData.district.trim()) {
       toast({
         title: "Error",
@@ -38,23 +47,31 @@ const AdminPanchayaths = () => {
       return;
     }
 
-    if (editingId) {
-      updatePanchayath(editingId, { ...formData });
+    try {
+      if (editingId) {
+        await updatePanchayath(editingId, { ...formData });
+        toast({
+          title: "Success",
+          description: "Panchayath updated successfully"
+        });
+        setEditingId(null);
+      } else {
+        await addPanchayath({ ...formData, isActive: true });
+        toast({
+          title: "Success",
+          description: "Panchayath added successfully"
+        });
+        setShowAddForm(false);
+      }
+      
+      setFormData({ name: '', district: '' });
+    } catch (error) {
       toast({
-        title: "Success",
-        description: "Panchayath updated successfully"
+        title: "Error",
+        description: "Failed to save panchayath",
+        variant: "destructive"
       });
-      setEditingId(null);
-    } else {
-      addPanchayath({ ...formData, isActive: true });
-      toast({
-        title: "Success",
-        description: "Panchayath added successfully"
-      });
-      setShowAddForm(false);
     }
-    
-    setFormData({ name: '', district: '' });
   };
 
   const handleEdit = (panchayath: any) => {
@@ -63,13 +80,21 @@ const AdminPanchayaths = () => {
     setShowAddForm(true);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this panchayath?')) {
-      deletePanchayath(id);
-      toast({
-        title: "Success",
-        description: "Panchayath deleted successfully"
-      });
+      try {
+        await deletePanchayath(id);
+        toast({
+          title: "Success",
+          description: "Panchayath deleted successfully"
+        });
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to delete panchayath",
+          variant: "destructive"
+        });
+      }
     }
   };
 
@@ -92,7 +117,6 @@ const AdminPanchayaths = () => {
           </Button>
         </div>
 
-        {/* Add/Edit Form */}
         {showAddForm && (
           <Card className="mb-6">
             <CardHeader>
@@ -131,7 +155,6 @@ const AdminPanchayaths = () => {
           </Card>
         )}
 
-        {/* Panchayaths List */}
         <Card>
           <CardHeader>
             <CardTitle>Panchayaths ({panchayaths.length})</CardTitle>

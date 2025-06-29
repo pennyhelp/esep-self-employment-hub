@@ -1,62 +1,50 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useSupabaseStore } from '../store/supabaseStore';
 import Navbar from '../components/Navbar';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
-import { Badge } from '../components/ui/badge';
-import { Users, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { ArrowRight, Users, Award, Target, Megaphone } from 'lucide-react';
 
 const Index = () => {
-  const { 
-    announcements, 
-    registrations, 
-    fetchAnnouncements, 
-    fetchRegistrations,
-    setupRealtimeSubscriptions 
-  } = useSupabaseStore();
+  const { announcements, fetchAnnouncements } = useSupabaseStore();
 
   useEffect(() => {
     fetchAnnouncements();
-    fetchRegistrations();
-    setupRealtimeSubscriptions();
-  }, []);
-
-  const stats = {
-    total: registrations.length,
-    pending: registrations.filter(r => r.status === 'pending').length,
-    approved: registrations.filter(r => r.status === 'approved').length,
-    rejected: registrations.filter(r => r.status === 'rejected').length,
-  };
+  }, [fetchAnnouncements]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
       <Navbar />
       
       {/* Hero Section */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-blue-600 to-green-600 text-white">
-        <div className="absolute inset-0 bg-black opacity-20"></div>
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+      <div className="relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
           <div className="text-center">
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 animate-fade-in">
-              E-LIFE SOCIETY
+            <h1 className="text-5xl md:text-7xl font-bold text-gray-900 mb-6 leading-tight">
+              Welcome to{' '}
+              <span className="bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
+                E-LIFE SOCIETY
+              </span>
             </h1>
-            <p className="text-xl md:text-2xl mb-8 opacity-90 max-w-3xl mx-auto">
-              Join Pennyekart - The Hybrid Ecommerce Platform
-            </p>
-            <p className="text-lg mb-12 opacity-80 max-w-2xl mx-auto">
-              Empowering communities through digital commerce and self-employment opportunities
+            <p className="text-xl md:text-2xl text-gray-600 mb-12 max-w-4xl mx-auto leading-relaxed">
+              Join Pennyekart - The Hybrid Ecommerce Platform. Empowering self-employment through innovative digital solutions and community support.
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
+            {/* Main Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-6 justify-center mb-16">
               <Link to="/categories">
-                <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100 text-xl px-8 py-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-                  Start Registration
+                <Button size="lg" className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200">
+                  <Users className="mr-2 h-6 w-6" />
+                  Register Now
+                  <ArrowRight className="ml-2 h-6 w-6" />
                 </Button>
               </Link>
+              
               <Link to="/status">
-                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600 text-xl px-8 py-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+                <Button size="lg" variant="outline" className="border-2 border-green-600 text-green-700 hover:bg-green-50 px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200">
+                  <Target className="mr-2 h-6 w-6" />
                   Check Status
                 </Button>
               </Link>
@@ -65,106 +53,114 @@ const Index = () => {
         </div>
       </div>
 
-      {/* Statistics Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <h2 className="text-3xl font-bold text-center mb-12 text-gray-800">Registration Statistics</h2>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white hover:shadow-lg transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <Users className="h-12 w-12 mb-4" />
-                <div className="ml-4">
-                  <p className="text-blue-100">Total Registrations</p>
-                  <p className="text-3xl font-bold">{stats.total}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-yellow-500 to-orange-500 text-white hover:shadow-lg transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <Clock className="h-12 w-12 mb-4" />
-                <div className="ml-4">
-                  <p className="text-yellow-100">Pending</p>
-                  <p className="text-3xl font-bold">{stats.pending}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white hover:shadow-lg transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <CheckCircle className="h-12 w-12 mb-4" />
-                <div className="ml-4">
-                  <p className="text-green-100">Approved</p>
-                  <p className="text-3xl font-bold">{stats.approved}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-red-500 to-red-600 text-white hover:shadow-lg transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <AlertCircle className="h-12 w-12 mb-4" />
-                <div className="ml-4">
-                  <p className="text-red-100">Rejected</p>
-                  <p className="text-3xl font-bold">{stats.rejected}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
       {/* Announcements Section */}
-      <div className="bg-gray-50 py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center mb-12 text-gray-800">Latest Announcements</h2>
-          <div className="space-y-6">
-            {announcements.length > 0 ? (
-              announcements.map((announcement) => (
-                <Card key={announcement.id} className="hover:shadow-lg transition-shadow">
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <CardTitle className="text-xl text-blue-600">{announcement.title}</CardTitle>
-                      <Badge variant="secondary">
-                        {new Date(announcement.created_at).toLocaleDateString()}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-gray-700 leading-relaxed">{announcement.content}</p>
-                  </CardContent>
-                </Card>
-              ))
-            ) : (
-              <Card>
-                <CardContent className="p-8 text-center">
-                  <p className="text-gray-500">No announcements available at the moment.</p>
+      {announcements.length > 0 && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 flex items-center justify-center gap-3">
+              <Megaphone className="h-8 w-8 text-blue-600" />
+              Latest Announcements
+            </h2>
+          </div>
+          
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {announcements.slice(0, 3).map((announcement) => (
+              <Card key={announcement.id} className="hover:shadow-lg transition-all duration-200 border-l-4 border-l-blue-500">
+                <CardHeader>
+                  <CardTitle className="text-lg font-semibold text-gray-900">
+                    {announcement.title}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-600 leading-relaxed">{announcement.content}</p>
+                  <p className="text-sm text-gray-400 mt-4">
+                    {new Date(announcement.created_at).toLocaleDateString()}
+                  </p>
                 </CardContent>
               </Card>
-            )}
+            ))}
           </div>
+        </div>
+      )}
+
+      {/* Features Section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+            Why Choose E-LIFE SOCIETY?
+          </h2>
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            Discover the benefits of joining our hybrid ecommerce platform
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <Card className="text-center p-8 hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+            <CardContent className="pt-6">
+              <div className="w-16 h-16 mx-auto mb-6 bg-blue-100 rounded-full flex items-center justify-center">
+                <Users className="h-8 w-8 text-blue-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">Self Employment</h3>
+              <p className="text-gray-600">
+                Create your own business opportunities with our comprehensive platform designed for entrepreneurs
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="text-center p-8 hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+            <CardContent className="pt-6">
+              <div className="w-16 h-16 mx-auto mb-6 bg-green-100 rounded-full flex items-center justify-center">
+                <Award className="h-8 w-8 text-green-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">Quality Services</h3>
+              <p className="text-gray-600">
+                Access premium services with special offers and discounts across multiple categories
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="text-center p-8 hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+            <CardContent className="pt-6">
+              <div className="w-16 h-16 mx-auto mb-6 bg-purple-100 rounded-full flex items-center justify-center">
+                <Target className="h-8 w-8 text-purple-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">Easy Registration</h3>
+              <p className="text-gray-600">
+                Simple and quick registration process with instant customer ID generation
+              </p>
+            </CardContent>
+          </Card>
         </div>
       </div>
 
       {/* Call to Action */}
-      <div className="bg-gradient-to-r from-green-600 to-blue-600 py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-bold text-white mb-6">Ready to Get Started?</h2>
-          <p className="text-xl text-white opacity-90 mb-8 max-w-2xl mx-auto">
-            Join thousands of others who have already registered for self-employment opportunities
+      <div className="bg-gradient-to-r from-blue-600 to-green-600 py-16">
+        <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
+            Ready to Start Your Journey?
+          </h2>
+          <p className="text-xl text-blue-100 mb-8">
+            Join thousands of entrepreneurs who have transformed their lives with E-LIFE SOCIETY
           </p>
           <Link to="/categories">
-            <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100 text-xl px-8 py-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-              Register Now
+            <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200">
+              Get Started Today
+              <ArrowRight className="ml-2 h-6 w-6" />
             </Button>
           </Link>
         </div>
       </div>
+
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h3 className="text-2xl font-bold mb-4">E-LIFE SOCIETY</h3>
+          <p className="text-gray-400 mb-6">Empowering communities through digital innovation</p>
+          <p className="text-sm text-gray-500">
+            © 2024 E-LIFE SOCIETY. All rights reserved.
+          </p>
+        </div>
+      </footer>
     </div>
   );
 };

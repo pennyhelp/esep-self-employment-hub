@@ -12,6 +12,7 @@ import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminRegistrations from "./pages/admin/AdminRegistrations";
 import AdminPanchayaths from "./pages/admin/AdminPanchayaths";
+import AdminCategories from "./pages/admin/AdminCategories";
 import AdminRoles from "./pages/admin/AdminRoles";
 import NotFound from "./pages/NotFound";
 
@@ -32,6 +33,7 @@ const App = () => (
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/registrations" element={<AdminRegistrations />} />
           <Route path="/admin/panchayaths" element={<AdminPanchayaths />} />
+          <Route path="/admin/categories" element={<AdminCategories />} />
           <Route path="/admin/roles" element={<AdminRoles />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

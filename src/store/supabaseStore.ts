@@ -1,20 +1,63 @@
 
 import { create } from 'zustand';
 import { supabase } from '../integrations/supabase/client';
-import { Category, Panchayath, Registration, Admin } from '../types';
+
+interface Category {
+  id: string;
+  name: string;
+  description: string;
+  actualFee: number;
+  offerFee: number;
+  image?: string;
+  isActive: boolean;
+}
+
+interface Panchayath {
+  id: string;
+  name: string;
+  district: string;
+  isActive: boolean;
+}
+
+interface Registration {
+  id: string;
+  customerId: string;
+  categoryId: string;
+  categoryName: string;
+  name: string;
+  address: string;
+  mobileNumber: string;
+  panchayathId: string;
+  panchayathName: string;
+  ward: string;
+  agentPro: string;
+  status: 'pending' | 'approved' | 'rejected';
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface Admin {
+  id: string;
+  username: string;
+  password: string;
+  role: 'super' | 'local' | 'user';
+  isActive: boolean;
+}
+
+interface Announcement {
+  id: string;
+  title: string;
+  content: string;
+  is_active: boolean;
+  created_at: string;
+}
 
 interface SupabaseStore {
   categories: Category[];
   panchayaths: Panchayath[];
   registrations: Registration[];
   admins: Admin[];
-  announcements: Array<{
-    id: string;
-    title: string;
-    content: string;
-    is_active: boolean;
-    created_at: string;
-  }>;
+  announcements: Announcement[];
   currentAdmin: Admin | null;
   loading: boolean;
   
@@ -29,7 +72,9 @@ interface SupabaseStore {
   addPanchayath: (panchayath: Omit<Panchayath, 'id'>) => Promise<void>;
   updatePanchayath: (id: string, updates: Partial<Panchayath>) => Promise<void>;
   deletePanchayath: (id: string) => Promise<void>;
+  addCategory: (category: Omit<Category, 'id'>) => Promise<void>;
   updateCategory: (id: string, updates: Partial<Category>) => Promise<void>;
+  deleteCategory: (id: string) => Promise<void>;
   updateAdmin: (id: string, updates: Partial<Admin>) => Promise<void>;
   setCurrentAdmin: (admin: Admin | null) => void;
   generateCustomerId: (mobile: string, name: string) => string;
@@ -56,6 +101,7 @@ export const useSupabaseStore = create<SupabaseStore>((set, get) => ({
       
       if (error) {
         console.error('Error fetching categories:', error);
+        set({ loading: false });
         return;
       }
       
@@ -63,8 +109,8 @@ export const useSupabaseStore = create<SupabaseStore>((set, get) => ({
         id: item.id,
         name: item.name,
         description: item.description,
-        actualFee: item.actual_fee,
-        offerFee: item.offer_fee,
+        actualFee: item.actual_fee || 0,
+        offerFee: item.offer_fee || 0,
         image: item.image_url,
         isActive: item.is_active
       })) || [];
@@ -105,7 +151,8 @@ export const useSupabaseStore = create<SupabaseStore>((set, get) => ({
     try {
       const { data, error } = await supabase
         .from('registrations')
-        .select('*');
+        .select('*')
+        .order('created_at', { ascending: false });
       
       if (error) {
         console.error('Error fetching registrations:', error);
@@ -196,7 +243,7 @@ export const useSupabaseStore = create<SupabaseStore>((set, get) => ({
           panchayath_name: registration.panchayathName,
           ward: registration.ward,
           agent_pro: registration.agentPro,
-          status: registration.status
+          status: registration.status || 'pending'
         });
       
       if (error) {
@@ -294,6 +341,30 @@ export const useSupabaseStore = create<SupabaseStore>((set, get) => ({
     }
   },
 
+  addCategory: async (category) => {
+    try {
+      const { error } = await supabase
+        .from('categories')
+        .insert({
+          name: category.name,
+          description: category.description,
+          actual_fee: category.actualFee,
+          offer_fee: category.offerFee,
+          image_url: category.image,
+          is_active: true
+        });
+      
+      if (error) {
+        console.error('Error adding category:', error);
+        throw error;
+      }
+      await get().fetchCategories();
+    } catch (error) {
+      console.error('Error adding category:', error);
+      throw error;
+    }
+  },
+
   updateCategory: async (id, updates) => {
     try {
       const { error } = await supabase
@@ -315,6 +386,24 @@ export const useSupabaseStore = create<SupabaseStore>((set, get) => ({
       await get().fetchCategories();
     } catch (error) {
       console.error('Error updating category:', error);
+      throw error;
+    }
+  },
+
+  deleteCategory: async (id) => {
+    try {
+      const { error } = await supabase
+        .from('categories')
+        .delete()
+        .eq('id', id);
+      
+      if (error) {
+        console.error('Error deleting category:', error);
+        throw error;
+      }
+      await get().fetchCategories();
+    } catch (error) {
+      console.error('Error deleting category:', error);
       throw error;
     }
   },

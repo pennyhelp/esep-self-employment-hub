@@ -1,12 +1,13 @@
 
 import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useSupabaseStore } from '../../store/supabaseStore';
 import Navbar from '../../components/Navbar';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
 import { Badge } from '../../components/ui/badge';
-import { Users, CheckCircle, Clock, AlertCircle, Grid, MapPin } from 'lucide-react';
+import { Button } from '../../components/ui/button';
+import { Users, CheckCircle, Clock, AlertCircle, Grid, MapPin, Settings } from 'lucide-react';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -28,7 +29,6 @@ const AdminDashboard = () => {
       return;
     }
     
-    // Fetch data and setup realtime subscriptions
     const initializeData = async () => {
       try {
         await Promise.all([
@@ -43,7 +43,7 @@ const AdminDashboard = () => {
     };
 
     initializeData();
-  }, [currentAdmin, navigate]);
+  }, [currentAdmin, navigate, fetchRegistrations, fetchCategories, fetchPanchayaths, setupRealtimeSubscriptions]);
 
   if (!currentAdmin) {
     return null;
@@ -70,7 +70,6 @@ const AdminDashboard = () => {
     rejected: registrations.filter(r => r.status === 'rejected').length,
   };
 
-  // Group registrations by panchayath
   const panchayathStats = panchayaths.map(panchayath => {
     const panchayathRegistrations = registrations.filter(r => r.panchayathId === panchayath.id);
     return {
@@ -91,6 +90,36 @@ const AdminDashboard = () => {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
           <p className="text-gray-600">Overview of registration statistics and management</p>
+        </div>
+
+        {/* Quick Action Buttons */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <Link to="/admin/registrations">
+            <Button variant="outline" className="w-full h-16 flex flex-col gap-2">
+              <Users className="h-6 w-6" />
+              <span>Registrations</span>
+            </Button>
+          </Link>
+          <Link to="/admin/categories">
+            <Button variant="outline" className="w-full h-16 flex flex-col gap-2">
+              <Grid className="h-6 w-6" />
+              <span>Categories</span>
+            </Button>
+          </Link>
+          <Link to="/admin/panchayaths">
+            <Button variant="outline" className="w-full h-16 flex flex-col gap-2">
+              <MapPin className="h-6 w-6" />
+              <span>Panchayaths</span>
+            </Button>
+          </Link>
+          {currentAdmin.role === 'super' && (
+            <Link to="/admin/roles">
+              <Button variant="outline" className="w-full h-16 flex flex-col gap-2">
+                <Settings className="h-6 w-6" />
+                <span>Admin Roles</span>
+              </Button>
+            </Link>
+          )}
         </div>
 
         {/* Statistics Cards */}
@@ -144,16 +173,16 @@ const AdminDashboard = () => {
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Panchayath-wise Statistics Table */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MapPin className="h-5 w-5" />
-                Panchayath-wise Registration Statistics
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
+        {/* Panchayath-wise Statistics Table */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MapPin className="h-5 w-5" />
+              Panchayath-wise Registration Statistics
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -170,7 +199,7 @@ const AdminDashboard = () => {
                     <TableRow key={index}>
                       <TableCell className="font-medium">{stat.name}</TableCell>
                       <TableCell>{stat.district}</TableCell>
-                      <TableCell className="text-center">{stat.total}</TableCell>
+                      <TableCell className="text-center font-bold">{stat.total}</TableCell>
                       <TableCell className="text-center">
                         <Badge variant="secondary">{stat.pending}</Badge>
                       </TableCell>
@@ -184,37 +213,37 @@ const AdminDashboard = () => {
                   ))}
                 </TableBody>
               </Table>
-            </CardContent>
-          </Card>
+            </div>
+          </CardContent>
+        </Card>
 
-          {/* Categories Overview */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Grid className="h-5 w-5" />
-                Categories Overview
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {categories.map(category => {
-                  const categoryRegistrations = registrations.filter(r => r.categoryId === category.id).length;
-                  return (
-                    <div key={category.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                      <div>
-                        <h4 className="font-medium">{category.name}</h4>
-                        <p className="text-sm text-gray-600">
-                          Fee: {category.actualFee > 0 ? `₹${category.offerFee}` : 'FREE'}
-                        </p>
-                      </div>
-                      <Badge variant="outline">{categoryRegistrations} registered</Badge>
+        {/* Categories Summary */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Grid className="h-5 w-5" />
+              Categories Summary
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {categories.map(category => {
+                const categoryRegistrations = registrations.filter(r => r.categoryId === category.id).length;
+                return (
+                  <div key={category.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                    <div>
+                      <h4 className="font-medium">{category.name}</h4>
+                      <p className="text-sm text-gray-600">
+                        Fee: {category.actualFee > 0 ? `₹${category.offerFee}` : 'FREE'}
+                      </p>
                     </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+                    <Badge variant="outline">{categoryRegistrations} registered</Badge>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
