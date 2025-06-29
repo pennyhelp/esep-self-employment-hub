@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Category, Panchayath } from '../types';
 import { useAppStore } from '../store/appStore';
@@ -100,7 +99,10 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ selectedCategory, o
         panchayathId: formData.panchayathId,
         panchayathName: selectedPanchayath?.name || '',
         ward: formData.ward,
-        agentPro: formData.agentPro
+        agentPro: formData.agentPro,
+        status: 'pending',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       });
 
       toast({
