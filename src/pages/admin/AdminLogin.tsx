@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAppStore } from '../../store/appStore';
+import { useSupabaseStore } from '../../store/supabaseStore';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -11,17 +11,23 @@ import { toast } from '@/hooks/use-toast';
 
 const AdminLogin = () => {
   const navigate = useNavigate();
-  const { admins, currentAdmin, setCurrentAdmin } = useAppStore();
+  const { admins, currentAdmin, setCurrentAdmin, fetchAdmins } = useSupabaseStore();
   const [credentials, setCredentials] = useState({ username: '', password: '' });
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (currentAdmin) {
+    // Fetch admins only once when component mounts
+    fetchAdmins();
+  }, []);
+
+  useEffect(() => {
+    // Only redirect if currentAdmin exists and we're not already navigating
+    if (currentAdmin && !isLoading) {
       navigate('/admin/dashboard');
     }
-  }, [currentAdmin, navigate]);
+  }, [currentAdmin, navigate, isLoading]);
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!credentials.username || !credentials.password) {
       toast({
         title: "Error",
@@ -33,30 +39,44 @@ const AdminLogin = () => {
 
     setIsLoading(true);
 
-    const admin = admins.find(
-      a => a.username === credentials.username && 
-           a.password === credentials.password && 
-           a.isActive
-    );
+    try {
+      const admin = admins.find(
+        a => a.username === credentials.username && 
+             a.password === credentials.password && 
+             a.isActive
+      );
 
-    setTimeout(() => {
-      if (admin) {
-        setCurrentAdmin(admin);
-        toast({
-          title: "Login Successful",
-          description: `Welcome, ${admin.username}!`
-        });
-        navigate('/admin/dashboard');
-      } else {
-        toast({
-          title: "Login Failed", 
-          description: "Invalid credentials or account is inactive",
-          variant: "destructive"
-        });
-      }
+      setTimeout(() => {
+        if (admin) {
+          setCurrentAdmin(admin);
+          toast({
+            title: "Login Successful",
+            description: `Welcome, ${admin.username}!`
+          });
+        } else {
+          toast({
+            title: "Login Failed", 
+            description: "Invalid credentials or account is inactive",
+            variant: "destructive"
+          });
+          setIsLoading(false);
+        }
+      }, 1000);
+    } catch (error) {
+      console.error('Login error:', error);
+      toast({
+        title: "Login Error",
+        description: "An error occurred during login",
+        variant: "destructive"
+      });
       setIsLoading(false);
-    }, 1000);
+    }
   };
+
+  // Don't render anything if already logged in to prevent flash
+  if (currentAdmin) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">

@@ -8,13 +8,15 @@ import RegistrationSuccess from '../components/RegistrationSuccess';
 import { Category } from '../types';
 
 const Categories = () => {
-  const { categories, fetchCategories } = useSupabaseStore();
+  const { categories, fetchCategories, loading } = useSupabaseStore();
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [customerId, setCustomerId] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchCategories();
-  }, []);
+    if (categories.length === 0) {
+      fetchCategories();
+    }
+  }, [categories.length, fetchCategories]);
 
   if (customerId) {
     return <RegistrationSuccess customerId={customerId} onBackToCategories={() => setCustomerId(null)} />;
@@ -27,6 +29,20 @@ const Categories = () => {
         onBack={() => setSelectedCategory(null)}
         onSuccess={(id) => setCustomerId(id)}
       />
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
+        <Navbar />
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading categories...</p>
+          </div>
+        </div>
+      </div>
     );
   }
 
@@ -55,7 +71,7 @@ const Categories = () => {
           ))}
         </div>
 
-        {categories.length === 0 && (
+        {categories.length === 0 && !loading && (
           <div className="text-center py-16">
             <div className="bg-white rounded-lg shadow-lg p-8 max-w-md mx-auto">
               <p className="text-gray-500 text-lg mb-4">No categories available at the moment</p>

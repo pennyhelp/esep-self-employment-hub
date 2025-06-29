@@ -18,7 +18,8 @@ const AdminDashboard = () => {
     fetchRegistrations,
     fetchCategories,
     fetchPanchayaths,
-    setupRealtimeSubscriptions
+    setupRealtimeSubscriptions,
+    loading
   } = useSupabaseStore();
 
   useEffect(() => {
@@ -27,14 +28,39 @@ const AdminDashboard = () => {
       return;
     }
     
-    fetchRegistrations();
-    fetchCategories();
-    fetchPanchayaths();
-    setupRealtimeSubscriptions();
+    // Fetch data and setup realtime subscriptions
+    const initializeData = async () => {
+      try {
+        await Promise.all([
+          fetchRegistrations(),
+          fetchCategories(),
+          fetchPanchayaths()
+        ]);
+        setupRealtimeSubscriptions();
+      } catch (error) {
+        console.error('Error initializing dashboard data:', error);
+      }
+    };
+
+    initializeData();
   }, [currentAdmin, navigate]);
 
   if (!currentAdmin) {
     return null;
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading dashboard...</p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   const stats = {

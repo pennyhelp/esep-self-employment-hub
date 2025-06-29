@@ -48,14 +48,18 @@ export const useSupabaseStore = create<SupabaseStore>((set, get) => ({
 
   fetchCategories: async () => {
     try {
+      set({ loading: true });
       const { data, error } = await supabase
         .from('categories')
         .select('*')
         .eq('is_active', true);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching categories:', error);
+        return;
+      }
       
-      const categories = data.map(item => ({
+      const categories = data?.map(item => ({
         id: item.id,
         name: item.name,
         description: item.description,
@@ -63,11 +67,12 @@ export const useSupabaseStore = create<SupabaseStore>((set, get) => ({
         offerFee: item.offer_fee,
         image: item.image_url,
         isActive: item.is_active
-      }));
+      })) || [];
       
-      set({ categories });
+      set({ categories, loading: false });
     } catch (error) {
       console.error('Error fetching categories:', error);
+      set({ loading: false });
     }
   },
 
@@ -78,14 +83,17 @@ export const useSupabaseStore = create<SupabaseStore>((set, get) => ({
         .select('*')
         .eq('is_active', true);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching panchayaths:', error);
+        return;
+      }
       
-      const panchayaths = data.map(item => ({
+      const panchayaths = data?.map(item => ({
         id: item.id,
         name: item.name,
         district: item.district,
         isActive: item.is_active
-      }));
+      })) || [];
       
       set({ panchayaths });
     } catch (error) {
@@ -99,9 +107,12 @@ export const useSupabaseStore = create<SupabaseStore>((set, get) => ({
         .from('registrations')
         .select('*');
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching registrations:', error);
+        return;
+      }
       
-      const registrations = data.map(item => ({
+      const registrations = data?.map(item => ({
         id: item.id,
         customerId: item.customer_id,
         categoryId: item.category_id,
@@ -116,7 +127,7 @@ export const useSupabaseStore = create<SupabaseStore>((set, get) => ({
         status: item.status as 'pending' | 'approved' | 'rejected',
         createdAt: item.created_at,
         updatedAt: item.updated_at
-      }));
+      })) || [];
       
       set({ registrations });
     } catch (error) {
@@ -130,15 +141,18 @@ export const useSupabaseStore = create<SupabaseStore>((set, get) => ({
         .from('admins')
         .select('*');
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching admins:', error);
+        return;
+      }
       
-      const admins = data.map(item => ({
+      const admins = data?.map(item => ({
         id: item.id,
         username: item.username,
         password: item.password,
         role: item.role as 'super' | 'local' | 'user',
         isActive: item.is_active
-      }));
+      })) || [];
       
       set({ admins });
     } catch (error) {
@@ -154,7 +168,11 @@ export const useSupabaseStore = create<SupabaseStore>((set, get) => ({
         .eq('is_active', true)
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching announcements:', error);
+        return;
+      }
+      
       set({ announcements: data || [] });
     } catch (error) {
       console.error('Error fetching announcements:', error);
@@ -181,7 +199,10 @@ export const useSupabaseStore = create<SupabaseStore>((set, get) => ({
           status: registration.status
         });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error adding registration:', error);
+        throw error;
+      }
       
       await get().fetchRegistrations();
       return customerId;
@@ -201,7 +222,10 @@ export const useSupabaseStore = create<SupabaseStore>((set, get) => ({
         })
         .eq('id', id);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating registration:', error);
+        throw error;
+      }
       await get().fetchRegistrations();
     } catch (error) {
       console.error('Error updating registration:', error);
@@ -219,7 +243,10 @@ export const useSupabaseStore = create<SupabaseStore>((set, get) => ({
           is_active: true
         });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error adding panchayath:', error);
+        throw error;
+      }
       await get().fetchPanchayaths();
     } catch (error) {
       console.error('Error adding panchayath:', error);
@@ -238,7 +265,10 @@ export const useSupabaseStore = create<SupabaseStore>((set, get) => ({
         })
         .eq('id', id);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating panchayath:', error);
+        throw error;
+      }
       await get().fetchPanchayaths();
     } catch (error) {
       console.error('Error updating panchayath:', error);
@@ -253,7 +283,10 @@ export const useSupabaseStore = create<SupabaseStore>((set, get) => ({
         .delete()
         .eq('id', id);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error deleting panchayath:', error);
+        throw error;
+      }
       await get().fetchPanchayaths();
     } catch (error) {
       console.error('Error deleting panchayath:', error);
@@ -275,7 +308,10 @@ export const useSupabaseStore = create<SupabaseStore>((set, get) => ({
         })
         .eq('id', id);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating category:', error);
+        throw error;
+      }
       await get().fetchCategories();
     } catch (error) {
       console.error('Error updating category:', error);
@@ -292,7 +328,10 @@ export const useSupabaseStore = create<SupabaseStore>((set, get) => ({
         })
         .eq('id', id);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating admin:', error);
+        throw error;
+      }
       await get().fetchAdmins();
     } catch (error) {
       console.error('Error updating admin:', error);
@@ -312,36 +351,42 @@ export const useSupabaseStore = create<SupabaseStore>((set, get) => ({
   },
 
   setupRealtimeSubscriptions: () => {
-    // Subscribe to categories changes
-    supabase
-      .channel('categories')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'categories' }, () => {
-        get().fetchCategories();
-      })
-      .subscribe();
+    try {
+      // Subscribe to categories changes
+      supabase
+        .channel('categories')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'categories' }, () => {
+          get().fetchCategories();
+        })
+        .subscribe();
 
-    // Subscribe to registrations changes
-    supabase
-      .channel('registrations')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'registrations' }, () => {
-        get().fetchRegistrations();
-      })
-      .subscribe();
+      // Subscribe to registrations changes
+      supabase
+        .channel('registrations')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'registrations' }, () => {
+          get().fetchRegistrations();
+        })
+        .subscribe();
 
-    // Subscribe to panchayaths changes
-    supabase
-      .channel('panchayaths')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'panchayaths' }, () => {
-        get().fetchPanchayaths();
-      })
-      .subscribe();
+      // Subscribe to panchayaths changes
+      supabase
+        .channel('panchayaths')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'panchayaths' }, () => {
+          get().fetchPanchayaths();
+        })
+        .subscribe();
 
-    // Subscribe to announcements changes
-    supabase
-      .channel('announcements')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'announcements' }, () => {
-        get().fetchAnnouncements();
-      })
-      .subscribe();
+      // Subscribe to announcements changes
+      supabase
+        .channel('announcements')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'announcements' }, () => {
+          get().fetchAnnouncements();
+        })
+        .subscribe();
+
+      console.log('Realtime subscriptions setup complete');
+    } catch (error) {
+      console.error('Error setting up realtime subscriptions:', error);
+    }
   }
 }));
