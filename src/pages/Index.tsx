@@ -1,129 +1,169 @@
 
-import React, { useState } from 'react';
-import { useAppStore } from '../store/appStore';
-import { Category } from '../types';
-import CategoryCard from '../components/CategoryCard';
-import RegistrationForm from '../components/RegistrationForm';
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useSupabaseStore } from '../store/supabaseStore';
 import Navbar from '../components/Navbar';
-import { Card, CardContent } from '../components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
-import { CheckCircle, Home } from 'lucide-react';
-
-type ViewState = 'categories' | 'form' | 'success';
+import { Badge } from '../components/ui/badge';
+import { Users, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 
 const Index = () => {
-  const { categories } = useAppStore();
-  const [currentView, setCurrentView] = useState<ViewState>('categories');
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
-  const [customerId, setCustomerId] = useState<string>('');
+  const { 
+    announcements, 
+    registrations, 
+    fetchAnnouncements, 
+    fetchRegistrations,
+    setupRealtimeSubscriptions 
+  } = useSupabaseStore();
 
-  const handleCategorySelect = (category: Category) => {
-    setSelectedCategory(category);
-    setCurrentView('form');
-  };
+  useEffect(() => {
+    fetchAnnouncements();
+    fetchRegistrations();
+    setupRealtimeSubscriptions();
+  }, []);
 
-  const handleRegistrationSuccess = (generatedCustomerId: string) => {
-    setCustomerId(generatedCustomerId);
-    setCurrentView('success');
-  };
-
-  const handleBackToCategories = () => {
-    setCurrentView('categories');
-    setSelectedCategory(null);
-  };
-
-  const handleBackToHome = () => {
-    setCurrentView('categories');
-    setSelectedCategory(null);
-    setCustomerId('');
+  const stats = {
+    total: registrations.length,
+    pending: registrations.filter(r => r.status === 'pending').length,
+    approved: registrations.filter(r => r.status === 'approved').length,
+    rejected: registrations.filter(r => r.status === 'rejected').length,
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
       <Navbar />
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {currentView === 'categories' && (
-          <>
-            <div className="text-center mb-12">
-              <h1 className="text-4xl font-bold text-gray-900 mb-4">
-                E-LIFE SOCIETY
-              </h1>
-              <p className="text-xl text-gray-600 mb-2">
-                Self Employment Registration Program
-              </p>
-              <p className="text-lg text-gray-500">
-                Join Pennyekart - The Hybrid Ecommerce Platform
-              </p>
-            </div>
-
-            <div className="mb-8">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-6 text-center">
-                Choose Your Registration Category
-              </h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {categories.filter(cat => cat.isActive).map((category) => (
-                  <CategoryCard
-                    key={category.id}
-                    category={category}
-                    onSelect={handleCategorySelect}
-                  />
-                ))}
-              </div>
-            </div>
-
-            <div className="text-center mt-12 p-6 bg-blue-50 rounded-lg">
-              <h3 className="text-lg font-semibold text-blue-800 mb-2">
-                About Pennyekart Hybrid Ecommerce
-              </h3>
-              <p className="text-blue-700">
-                Pennyekart connects home delivery service with self-employment programs through E-LIFE SOCIETY. 
-                Choose your category based on your business interests and get connected with customers in your area.
-              </p>
-            </div>
-          </>
-        )}
-
-        {currentView === 'form' && selectedCategory && (
-          <RegistrationForm
-            selectedCategory={selectedCategory}
-            onBack={handleBackToCategories}
-            onSuccess={handleRegistrationSuccess}
-          />
-        )}
-
-        {currentView === 'success' && (
-          <Card className="max-w-2xl mx-auto text-center">
-            <CardContent className="pt-8 pb-8">
-              <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                Registration Successful!
-              </h2>
-              <div className="bg-green-50 p-4 rounded-lg mb-6">
-                <p className="text-lg font-semibold text-green-800 mb-2">
-                  Your Customer ID:
-                </p>
-                <p className="text-2xl font-bold text-green-600 font-mono">
-                  {customerId}
-                </p>
-              </div>
-              <p className="text-gray-600 mb-6">
-                Please save this Customer ID for future reference. You can check your registration status using this ID.
-                Your registration is currently pending approval.
-              </p>
-              <div className="space-y-4">
-                <p className="text-sm text-gray-500">
-                  You will be notified once your registration is approved and payment processing is complete.
-                </p>
-                <Button onClick={handleBackToHome} className="flex items-center gap-2">
-                  <Home size={16} />
-                  Back to Home
+      {/* Hero Section */}
+      <div className="relative overflow-hidden bg-gradient-to-r from-blue-600 to-green-600 text-white">
+        <div className="absolute inset-0 bg-black opacity-20"></div>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+          <div className="text-center">
+            <h1 className="text-5xl md:text-7xl font-bold mb-6 animate-fade-in">
+              E-LIFE SOCIETY
+            </h1>
+            <p className="text-xl md:text-2xl mb-8 opacity-90 max-w-3xl mx-auto">
+              Join Pennyekart - The Hybrid Ecommerce Platform
+            </p>
+            <p className="text-lg mb-12 opacity-80 max-w-2xl mx-auto">
+              Empowering communities through digital commerce and self-employment opportunities
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
+              <Link to="/categories">
+                <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100 text-xl px-8 py-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+                  Start Registration
                 </Button>
+              </Link>
+              <Link to="/status">
+                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600 text-xl px-8 py-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+                  Check Status
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Statistics Section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <h2 className="text-3xl font-bold text-center mb-12 text-gray-800">Registration Statistics</h2>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white hover:shadow-lg transition-shadow">
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <Users className="h-12 w-12 mb-4" />
+                <div className="ml-4">
+                  <p className="text-blue-100">Total Registrations</p>
+                  <p className="text-3xl font-bold">{stats.total}</p>
+                </div>
               </div>
             </CardContent>
           </Card>
-        )}
+
+          <Card className="bg-gradient-to-br from-yellow-500 to-orange-500 text-white hover:shadow-lg transition-shadow">
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <Clock className="h-12 w-12 mb-4" />
+                <div className="ml-4">
+                  <p className="text-yellow-100">Pending</p>
+                  <p className="text-3xl font-bold">{stats.pending}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white hover:shadow-lg transition-shadow">
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <CheckCircle className="h-12 w-12 mb-4" />
+                <div className="ml-4">
+                  <p className="text-green-100">Approved</p>
+                  <p className="text-3xl font-bold">{stats.approved}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-red-500 to-red-600 text-white hover:shadow-lg transition-shadow">
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <AlertCircle className="h-12 w-12 mb-4" />
+                <div className="ml-4">
+                  <p className="text-red-100">Rejected</p>
+                  <p className="text-3xl font-bold">{stats.rejected}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Announcements Section */}
+      <div className="bg-gray-50 py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl font-bold text-center mb-12 text-gray-800">Latest Announcements</h2>
+          <div className="space-y-6">
+            {announcements.length > 0 ? (
+              announcements.map((announcement) => (
+                <Card key={announcement.id} className="hover:shadow-lg transition-shadow">
+                  <CardHeader>
+                    <div className="flex justify-between items-start">
+                      <CardTitle className="text-xl text-blue-600">{announcement.title}</CardTitle>
+                      <Badge variant="secondary">
+                        {new Date(announcement.created_at).toLocaleDateString()}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-gray-700 leading-relaxed">{announcement.content}</p>
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              <Card>
+                <CardContent className="p-8 text-center">
+                  <p className="text-gray-500">No announcements available at the moment.</p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Call to Action */}
+      <div className="bg-gradient-to-r from-green-600 to-blue-600 py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl font-bold text-white mb-6">Ready to Get Started?</h2>
+          <p className="text-xl text-white opacity-90 mb-8 max-w-2xl mx-auto">
+            Join thousands of others who have already registered for self-employment opportunities
+          </p>
+          <Link to="/categories">
+            <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100 text-xl px-8 py-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+              Register Now
+            </Button>
+          </Link>
+        </div>
       </div>
     </div>
   );

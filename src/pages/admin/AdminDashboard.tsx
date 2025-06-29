@@ -1,15 +1,25 @@
 
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAppStore } from '../../store/appStore';
+import { useSupabaseStore } from '../../store/supabaseStore';
 import Navbar from '../../components/Navbar';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
-import { Button } from '../../components/ui/button';
-import { Users, MapPin, UserCheck, BarChart } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
+import { Badge } from '../../components/ui/badge';
+import { Users, CheckCircle, Clock, AlertCircle, Grid, MapPin } from 'lucide-react';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
-  const { currentAdmin, registrations, panchayaths } = useAppStore();
+  const { 
+    currentAdmin, 
+    registrations, 
+    categories,
+    panchayaths,
+    fetchRegistrations,
+    fetchCategories,
+    fetchPanchayaths,
+    setupRealtimeSubscriptions
+  } = useSupabaseStore();
 
   useEffect(() => {
     if (!currentAdmin) {
@@ -17,27 +27,35 @@ const AdminDashboard = () => {
       return;
     }
     
-    if (currentAdmin.role !== 'super') {
-      navigate('/admin/registrations');
-      return;
-    }
+    fetchRegistrations();
+    fetchCategories();
+    fetchPanchayaths();
+    setupRealtimeSubscriptions();
   }, [currentAdmin, navigate]);
 
-  if (!currentAdmin || currentAdmin.role !== 'super') {
+  if (!currentAdmin) {
     return null;
   }
 
   const stats = {
-    totalRegistrations: registrations.length,
-    pendingRegistrations: registrations.filter(r => r.status === 'pending').length,
-    approvedRegistrations: registrations.filter(r => r.status === 'approved').length,
-    totalPanchayaths: panchayaths.length
+    total: registrations.length,
+    pending: registrations.filter(r => r.status === 'pending').length,
+    approved: registrations.filter(r => r.status === 'approved').length,
+    rejected: registrations.filter(r => r.status === 'rejected').length,
   };
 
-  const panchayathStats = panchayaths.map(panchayath => ({
-    ...panchayath,
-    registrationCount: registrations.filter(r => r.panchayathId === panchayath.id).length
-  }));
+  // Group registrations by panchayath
+  const panchayathStats = panchayaths.map(panchayath => {
+    const panchayathRegistrations = registrations.filter(r => r.panchayathId === panchayath.id);
+    return {
+      name: panchayath.name,
+      district: panchayath.district,
+      total: panchayathRegistrations.length,
+      pending: panchayathRegistrations.filter(r => r.status === 'pending').length,
+      approved: panchayathRegistrations.filter(r => r.status === 'approved').length,
+      rejected: panchayathRegistrations.filter(r => r.status === 'rejected').length,
+    };
+  });
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -45,138 +63,132 @@ const AdminDashboard = () => {
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Admin Dashboard
-          </h1>
-          <p className="text-gray-600">
-            Welcome back, {currentAdmin.username}! Here's your system overview.
-          </p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
+          <p className="text-gray-600">Overview of registration statistics and management</p>
         </div>
 
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card>
+          <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
             <CardContent className="p-6">
               <div className="flex items-center">
-                <Users className="h-8 w-8 text-blue-500" />
+                <Users className="h-10 w-10 mb-2" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Total Registrations</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.totalRegistrations}</p>
+                  <p className="text-blue-100">Total Registrations</p>
+                  <p className="text-3xl font-bold">{stats.total}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-gradient-to-br from-yellow-500 to-orange-500 text-white">
             <CardContent className="p-6">
               <div className="flex items-center">
-                <UserCheck className="h-8 w-8 text-green-500" />
+                <Clock className="h-10 w-10 mb-2" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Approved</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.approvedRegistrations}</p>
+                  <p className="text-yellow-100">Pending</p>
+                  <p className="text-3xl font-bold">{stats.pending}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white">
             <CardContent className="p-6">
               <div className="flex items-center">
-                <BarChart className="h-8 w-8 text-yellow-500" />
+                <CheckCircle className="h-10 w-10 mb-2" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Pending</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.pendingRegistrations}</p>
+                  <p className="text-green-100">Approved</p>
+                  <p className="text-3xl font-bold">{stats.approved}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-gradient-to-br from-red-500 to-red-600 text-white">
             <CardContent className="p-6">
               <div className="flex items-center">
-                <MapPin className="h-8 w-8 text-purple-500" />
+                <AlertCircle className="h-10 w-10 mb-2" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Panchayaths</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.totalPanchayaths}</p>
+                  <p className="text-red-100">Rejected</p>
+                  <p className="text-3xl font-bold">{stats.rejected}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Panchayath-wise Statistics Table */}
           <Card>
             <CardHeader>
-              <CardTitle>Registration Management</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <MapPin className="h-5 w-5" />
+                Panchayath-wise Registration Statistics
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-600 mb-4">
-                Manage all registrations, approve/reject applications, and export data.
-              </p>
-              <Button onClick={() => navigate('/admin/registrations')} className="w-full">
-                Manage Registrations
-              </Button>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Panchayath</TableHead>
+                    <TableHead>District</TableHead>
+                    <TableHead className="text-center">Total</TableHead>
+                    <TableHead className="text-center">Pending</TableHead>
+                    <TableHead className="text-center">Approved</TableHead>
+                    <TableHead className="text-center">Rejected</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {panchayathStats.map((stat, index) => (
+                    <TableRow key={index}>
+                      <TableCell className="font-medium">{stat.name}</TableCell>
+                      <TableCell>{stat.district}</TableCell>
+                      <TableCell className="text-center">{stat.total}</TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant="secondary">{stat.pending}</Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant="default">{stat.approved}</Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant="destructive">{stat.rejected}</Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </CardContent>
           </Card>
 
+          {/* Categories Overview */}
           <Card>
             <CardHeader>
-              <CardTitle>Panchayath Management</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Grid className="h-5 w-5" />
+                Categories Overview
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-600 mb-4">
-                Add, edit, or remove panchayaths and manage location data.
-              </p>
-              <Button onClick={() => navigate('/admin/panchayaths')} className="w-full">
-                Manage Panchayaths
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Admin Role Management</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600 mb-4">
-                Manage admin users, roles, and access permissions.
-              </p>
-              <Button onClick={() => navigate('/admin/roles')} className="w-full">
-                Manage Admin Roles
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Panchayath-wise Statistics */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Panchayath-wise Registration Statistics</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {panchayathStats.map((panchayath) => (
-                <Card key={panchayath.id} className="cursor-pointer hover:shadow-md transition-shadow">
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-start">
+              <div className="space-y-4">
+                {categories.map(category => {
+                  const categoryRegistrations = registrations.filter(r => r.categoryId === category.id).length;
+                  return (
+                    <div key={category.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                       <div>
-                        <h3 className="font-semibold text-lg">{panchayath.name}</h3>
-                        <p className="text-sm text-gray-600">{panchayath.district}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-2xl font-bold text-blue-600">
-                          {panchayath.registrationCount}
+                        <h4 className="font-medium">{category.name}</h4>
+                        <p className="text-sm text-gray-600">
+                          Fee: {category.actualFee > 0 ? `₹${category.offerFee}` : 'FREE'}
                         </p>
-                        <p className="text-xs text-gray-500">registrations</p>
                       </div>
+                      <Badge variant="outline">{categoryRegistrations} registered</Badge>
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

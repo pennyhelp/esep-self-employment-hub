@@ -1,7 +1,6 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAppStore } from '../../store/appStore';
+import { useSupabaseStore } from '../../store/supabaseStore';
 import Navbar from '../../components/Navbar';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
@@ -12,13 +11,29 @@ import { toast } from '@/hooks/use-toast';
 
 const AdminRegistrations = () => {
   const navigate = useNavigate();
-  const { currentAdmin, registrations, categories, panchayaths, updateRegistration } = useAppStore();
+  const { 
+    currentAdmin, 
+    registrations, 
+    categories, 
+    panchayaths, 
+    updateRegistration,
+    fetchRegistrations,
+    fetchCategories,
+    fetchPanchayaths,
+    setupRealtimeSubscriptions
+  } = useSupabaseStore();
   const [filter, setFilter] = useState({ category: 'all', panchayath: 'all', status: 'all' });
 
   useEffect(() => {
     if (!currentAdmin) {
       navigate('/admin/login');
+      return;
     }
+    
+    fetchRegistrations();
+    fetchCategories();
+    fetchPanchayaths();
+    setupRealtimeSubscriptions();
   }, [currentAdmin, navigate]);
 
   if (!currentAdmin) {
@@ -32,19 +47,60 @@ const AdminRegistrations = () => {
     return true;
   });
 
-  const handleStatusChange = (registrationId: string, newStatus: 'approved' | 'rejected') => {
-    updateRegistration(registrationId, { status: newStatus });
-    toast({
-      title: "Status Updated",
-      description: `Registration ${newStatus} successfully`,
-    });
+  const handleStatusChange = async (registrationId: string, newStatus: 'approved' | 'rejected') => {
+    try {
+      await updateRegistration(registrationId, { status: newStatus });
+      toast({
+        title: "Status Updated",
+        description: `Registration ${newStatus} successfully`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update status",
+        variant: "destructive"
+      });
+    }
   };
 
   const exportToExcel = () => {
-    toast({
-      title: "Export Feature",
-      description: "Excel export functionality will be implemented soon",
-    });
+    try {
+      const headers = ['Customer ID', 'Name', 'Category', 'Mobile', 'Panchayath', 'Ward', 'Status', 'Created At'];
+      const csvContent = [
+        headers.join(','),
+        ...filteredRegistrations.map(reg => [
+          reg.customerId,
+          `"${reg.name}"`,
+          `"${reg.categoryName}"`,
+          reg.mobileNumber,
+          `"${reg.panchayathName}"`,
+          `"${reg.ward}"`,
+          reg.status,
+          new Date(reg.createdAt).toLocaleDateString()
+        ].join(','))
+      ].join('\n');
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `registrations_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast({
+        title: "Export Successful",
+        description: "Registration data has been exported to CSV file",
+      });
+    } catch (error) {
+      toast({
+        title: "Export Failed",
+        description: "Failed to export data. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   return (

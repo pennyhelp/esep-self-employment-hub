@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Category, Panchayath } from '../types';
-import { useAppStore } from '../store/appStore';
+import { useSupabaseStore } from '../store/supabaseStore';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -27,7 +27,7 @@ interface FormData {
 }
 
 const RegistrationForm: React.FC<RegistrationFormProps> = ({ selectedCategory, onBack, onSuccess }) => {
-  const { panchayaths, addRegistration, getRegistrationByMobile } = useAppStore();
+  const { panchayaths, addRegistration, getRegistrationByMobile, fetchPanchayaths } = useSupabaseStore();
   const [formData, setFormData] = useState<FormData>({
     name: '',
     address: '',
@@ -38,6 +38,10 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ selectedCategory, o
   });
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    fetchPanchayaths();
+  }, []);
 
   const handleInputChange = (field: keyof FormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -84,13 +88,13 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ selectedCategory, o
     setShowConfirmation(true);
   };
 
-  const handleConfirmSubmit = () => {
+  const handleConfirmSubmit = async () => {
     setIsSubmitting(true);
     
     try {
       const selectedPanchayath = panchayaths.find(p => p.id === formData.panchayathId);
       
-      const customerId = addRegistration({
+      const customerId = await addRegistration({
         categoryId: selectedCategory.id,
         categoryName: selectedCategory.name,
         name: formData.name,
